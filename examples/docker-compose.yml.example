@@ -26,13 +26,13 @@ services:
       # begin the intro at position (optional, e.g. 00:00:05)
       - BBB_BEGIN_INTRO_AT=04:40
       # end intro after (optional, e.g. 01:00:00 - after one hour)
-      - BBB_END_INTRO_AT=
+      #- BBB_END_INTRO_AT=
       # Media server url:
       - BBB_STREAM_URL=rtmp://a.rtmp.youtube.com/live2/zvhd-j1q6-wucd-z4be-7geh
       # Message to post in BBB Chat when joining a conference
       - BBB_CHAT_MESSAGE=This meeting is streamed to
       # Resolution to be streamed/downloaded in format WxH (default 1920x1080)
-      - BBB_RESOLUTION=1920x1080
+      - BBB_RESOLUTION=426x240
       # stream video bitrate
       - FFMPEG_STREAM_VIDEO_BITRATE=4000
       # threads used for stream (0=auto)
