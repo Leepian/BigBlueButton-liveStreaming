@@ -6,11 +6,11 @@ services:
     shm_size: '2gb'
     environment:
       # BigBlueButton Server url:
-      - BBB_URL=https://your_BigBlueButton_server/bigbluebutton/api
+      - BBB_URL=https://james.awshost.in/bigbluebutton/
       # BigBlueButton secret:
-      - BBB_SECRET=your_secret
+      - BBB_SECRET=mSl0nG5hNIbDmGvrKHigVLkWw7Rwyflmy1NPFBVv0
       # BigBlueButton meetingID:
-      - BBB_MEETING_ID=your_meetingID
+      - BBB_MEETING_ID=random-7043395
       # start meeting (optional):
       - BBB_START_MEETING=false
       # attendee password (optional - has to be set to the attendee password of moodle/greenlight or any other frontend to allow joining via their links):
@@ -28,7 +28,7 @@ services:
       # end intro after (optional, e.g. 01:00:00 - after one hour)
       - BBB_END_INTRO_AT=
       # Media server url:
-      - BBB_STREAM_URL=rtmp://media_server_url/stream/stream_key
+      - BBB_STREAM_URL=rtmp://a.rtmp.youtube.com/live2/zvhd-j1q6-wucd-z4be-7geh
       # Message to post in BBB Chat when joining a conference
       - BBB_CHAT_MESSAGE=This meeting is streamed to
       # Resolution to be streamed/downloaded in format WxH (default 1920x1080)
