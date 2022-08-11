@@ -1,17 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, argparse, time, subprocess, shlex, logging, os, re
+import sys
+import argparse
+import time
+import subprocess
+import shlex
+import logging
+import os
+import re
 
 from bigbluebutton_api_python import BigBlueButton, exception
-from bigbluebutton_api_python import util as bbbUtil 
+from bigbluebutton_api_python import util as bbbUtil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys  
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.common.exceptions import JavascriptException
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.chrome.options import Options  
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -25,27 +32,41 @@ browser = None
 selenium_timeout = 30
 connect_timeout = 5
 
-logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO' if not os.environ.get('DEBUG') else 'DEBUG'))
+logging.basicConfig(level=os.environ.get(
+    'LOGLEVEL', 'INFO' if not os.environ.get('DEBUG') else 'DEBUG'))
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-s","--server", help="Big Blue Button Server URL")
-parser.add_argument("-p","--secret", help="Big Blue Button Secret")
-parser.add_argument("-i","--id", help="Big Blue Button Meeting ID")
-parser.add_argument("-I","--intro", help="Intro file to play before streaming")
-parser.add_argument("-B","--beginIntroAt", help="begin intro at position (e.g. 00:01:05)")
-parser.add_argument("-E","--endIntroAt", help="End intro at position (e.g. 01:00:04)")
-parser.add_argument("-l","--stream", help="live stream a BigBlueButton meeting",action="store_true")
-parser.add_argument("-d","--download", help="download / save a BigBlueButton meeting",action="store_true")
-parser.add_argument("-S","--startMeeting", help="start the meeting if not running",action="store_true")
-parser.add_argument("-A","--attendeePassword", help="attendee password (required to create meetings)")
-parser.add_argument("-M","--moderatorPassword", help="moderator password (required to create a meeting)")
-parser.add_argument("-T","--meetingTitle", help="meeting title (required to create a meeting)")
-parser.add_argument("-u","--user", help="Name to join the meeting",default="Live")
-parser.add_argument("-t","--target", help="RTMP Streaming URL")
-parser.add_argument("--chatUrl", help="Streaming URL to display in the chat", default=False)
-parser.add_argument("--chatMsg", nargs='+', help="Message to display in the chat before Streaming URL", default=False)
-parser.add_argument("-c","--chat", help="Show the chat",action="store_true")
-parser.add_argument("-r","--resolution", help="Resolution as WxH", default='1920x1080')
+parser.add_argument("-s", "--server", help="Big Blue Button Server URL")
+parser.add_argument("-p", "--secret", help="Big Blue Button Secret")
+parser.add_argument("-i", "--id", help="Big Blue Button Meeting ID")
+parser.add_argument(
+    "-I", "--intro", help="Intro file to play before streaming")
+parser.add_argument("-B", "--beginIntroAt",
+                    help="begin intro at position (e.g. 00:01:05)")
+parser.add_argument("-E", "--endIntroAt",
+                    help="End intro at position (e.g. 01:00:04)")
+parser.add_argument(
+    "-l", "--stream", help="live stream a BigBlueButton meeting", action="store_true")
+parser.add_argument("-d", "--download",
+                    help="download / save a BigBlueButton meeting", action="store_true")
+parser.add_argument("-S", "--startMeeting",
+                    help="start the meeting if not running", action="store_true")
+parser.add_argument("-A", "--attendeePassword",
+                    help="attendee password (required to create meetings)")
+parser.add_argument("-M", "--moderatorPassword",
+                    help="moderator password (required to create a meeting)")
+parser.add_argument("-T", "--meetingTitle",
+                    help="meeting title (required to create a meeting)")
+parser.add_argument(
+    "-u", "--user", help="Name to join the meeting", default="Live")
+parser.add_argument("-t", "--target", help="RTMP Streaming URL")
+parser.add_argument(
+    "--chatUrl", help="Streaming URL to display in the chat", default=False)
+parser.add_argument("--chatMsg", nargs='+',
+                    help="Message to display in the chat before Streaming URL", default=False)
+parser.add_argument("-c", "--chat", help="Show the chat", action="store_true")
+parser.add_argument("-r", "--resolution",
+                    help="Resolution as WxH", default='1920x1080')
 parser.add_argument('--ffmpeg-stream-threads', help='Threads to use for ffmpeg streaming', type=int,
                     default=os.environ.get('FFMPEG_STREAM_THREADS', '') or 0)
 parser.add_argument('--ffmpeg-stream-video-bitrate', help='Video birate to use for ffmpeg streaming (in k)', type=int,
@@ -63,7 +84,8 @@ parser.add_argument(
 parser.add_argument(
     '--ffmpeg-download-options',
     help='ffmpeg download options (can be set using env FFMPEG_DOWNLOAD_OPTIONS)',
-    default=os.environ.get('FFMPEG_DOWNLOAD_OPTIONS', '') or '-c:v libx264rgb -crf 0 -preset ultrafast'
+    default=os.environ.get('FFMPEG_DOWNLOAD_OPTIONS',
+                           '') or '-c:v libx264rgb -crf 0 -preset ultrafast'
 )
 parser.add_argument(
     '--ffmpeg-input-thread-queue-size',
@@ -72,8 +94,8 @@ parser.add_argument(
     default=os.environ.get('FFMPEG_INPUT_THREAD_QUEUE_SIZE', '1024')
 )
 parser.add_argument(
-   '--browser-disable-dev-shm-usage', action='store_true', default=False,
-   help='do not use /dev/shm',
+    '--browser-disable-dev-shm-usage', action='store_true', default=False,
+    help='do not use /dev/shm',
 )
 parser.add_argument(
     '--bbb-hide-meeting-title',
@@ -106,37 +128,43 @@ parser.add_argument(
 args = parser.parse_args()
 # some ugly hacks for additional options
 args.ffmpeg_stream_options = args.ffmpeg_stream_options.replace(
-   '$FFMPEG_STREAM_THREADS', str(args.ffmpeg_stream_threads),
+    '$FFMPEG_STREAM_THREADS', str(args.ffmpeg_stream_threads),
 ).replace(
-   '${FFMPEG_STREAM_VIDEO_BITRATE}', str(args.ffmpeg_stream_video_bitrate),
+    '${FFMPEG_STREAM_VIDEO_BITRATE}', str(args.ffmpeg_stream_video_bitrate),
 ).replace(
-   '${FFMPEG_STREAM_VIDEO_BITRATE/2}', str(args.ffmpeg_stream_video_bitrate // 2),
+    '${FFMPEG_STREAM_VIDEO_BITRATE/2}', str(
+        args.ffmpeg_stream_video_bitrate // 2),
 ).replace(
-   '${FFMPEG_STREAM_VIDEO_BITRATE*2}', str(args.ffmpeg_stream_video_bitrate * 2),
+    '${FFMPEG_STREAM_VIDEO_BITRATE*2}', str(
+        args.ffmpeg_stream_video_bitrate * 2),
 )
 
-bbb = BigBlueButton(args.server,args.secret)
-bbbUB = bbbUtil.UrlBuilder(args.server,args.secret)
+bbb = BigBlueButton(args.server, args.secret)
+bbbUB = bbbUtil.UrlBuilder(args.server, args.secret)
+
 
 def set_up():
     global browser
 
     assert re.fullmatch(r'\d+x\d+', args.resolution)
 
-    options = Options()  
-    options.add_argument('--disable-infobars') 
-    options.add_argument('--no-sandbox') 
-    options.add_argument('--kiosk') 
-    options.add_argument('--window-size=%s' % args.resolution.replace('x', ','))
+    options = Options()
+    options.add_argument('--disable-infobars')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--kiosk')
+    options.add_argument('--window-size=%s' %
+                         args.resolution.replace('x', ','))
     options.add_argument('--window-position=0,0')
     options.add_experimental_option("excludeSwitches", ['enable-automation'])
-    options.add_experimental_option('prefs', {'intl.accept_languages':'{locale}'.format(locale='en_US.UTF-8')})
-    options.add_argument('--start-fullscreen') 
+    options.add_experimental_option(
+        'prefs', {'intl.accept_languages': '{locale}'.format(locale='en_US.UTF-8')})
+    options.add_argument('--start-fullscreen')
     options.add_argument('--autoplay-policy=no-user-gesture-required')
     if args.browser_disable_dev_shm_usage:
         options.add_argument('--disable-dev-shm-usage')
     else:
-        dev_shm_size = int(subprocess.run('df /dev/shm/ --block-size=1M --output=size | tail -n 1', shell=True, stdout=subprocess.PIPE).stdout or '0')
+        dev_shm_size = int(subprocess.run(
+            'df /dev/shm/ --block-size=1M --output=size | tail -n 1', shell=True, stdout=subprocess.PIPE).stdout or '0')
         required_dev_shm_size = 500  # in MB, 1024MB is recommended
         if dev_shm_size < required_dev_shm_size:
             logging.error(
@@ -149,7 +177,16 @@ def set_up():
 
     logging.info('Starting browser!!')
 
-    browser = webdriver.Chrome(service=Service('./chromedriver'), options=options)
+    # browser = webdriver.Chrome(service=Service('./chromedriver'), options=options)
+    browser = webdriver.Chrome(executable_path='./chromedriver', options=options)
+
+    logging.info("get_join_url...")
+    join_url = get_join_url()
+    logging.info(join_url)
+    browser.get(join_url)
+
+    logging.info('Browser started!!')
+
 
 def bbb_browser():
     global browser
@@ -165,43 +202,49 @@ def bbb_browser():
     logging.info(join_url)
     browser.get(join_url)
 
-
-    time.sleep(10)
+    time.sleep(15)
     try:
         # Wait for the input element to appear
+
         logging.info("Waiting for chat input window to appear.")
-        element = EC.presence_of_element_located((By.ID, 'message-input'))
+        element = EC.presence_of_element_located((By.ID, 'tippy-57'))
         WebDriverWait(browser, selenium_timeout).until(element)
 
         element = browser.find_element(By.ID, 'message-input')
-        chat_send = browser.find_elements(By.CSS_SELECTOR, '[aria-label="Send message"]')[0]
+        chat_send = browser.find_elements(
+            By.CSS_SELECTOR, '[aria-label="Send message"]')[0]
         # ensure chat is enabled (might be locked by moderator)
         if element.is_enabled() and chat_send.is_enabled():
-           tmp_chatMsg = os.environ.get('BBB_CHAT_MESSAGE', "This meeting is streamed to")
-           tmp_chatCustomMsg = os.environ.get('BBB_CHAT_CUSTOM_MESSAGE', "This meeting is streamed to")
-           if not tmp_chatMsg in [ 'false', 'False', 'FALSE' ]:
-               if args.target is not None:
-                   tmp_chatUrl = args.target.partition('//')[2].partition('/')[0]
-                   if args.chatUrl:
-                       tmp_chatUrl = args.chatUrl
-                   if args.chatMsg:
-                       tmp_chatMsg = ' '.join(args.chatMsg).strip('"')
-                   tmp_chatMsg = "{0}: {1}".format(tmp_chatMsg, tmp_chatUrl)
-               elif tmp_chatCustomMsg != '':
-                   tmp_chatMsg = tmp_chatCustomMsg
-               else:
-                   tmp_chatMsg = "Recording in progress!"
-               
-               element.send_keys(tmp_chatMsg)
-               chat_send.click()
+            tmp_chatMsg = os.environ.get(
+                'BBB_CHAT_MESSAGE', "This meeting is streamed to")
+            tmp_chatCustomMsg = os.environ.get(
+                'BBB_CHAT_CUSTOM_MESSAGE', "This meeting is streamed to")
+            if not tmp_chatMsg in ['false', 'False', 'FALSE']:
+                if args.target is not None:
+                    tmp_chatUrl = args.target.partition(
+                        '//')[2].partition('/')[0]
+                    if args.chatUrl:
+                        tmp_chatUrl = args.chatUrl
+                    if args.chatMsg:
+                        tmp_chatMsg = ' '.join(args.chatMsg).strip('"')
+                    tmp_chatMsg = "{0}: {1}".format(tmp_chatMsg, tmp_chatUrl)
+                elif tmp_chatCustomMsg != '':
+                    tmp_chatMsg = tmp_chatCustomMsg
+                else:
+                    tmp_chatMsg = "Recording in progress!"
+
+                element.send_keys(tmp_chatMsg)
+                chat_send.click()
         else:
             logging.info("chat is not enabled")
 
         if args.chat:
             try:
-                browser.execute_script("document.querySelector('[aria-label=\"User list\"]').parentElement.style.display='none';")
+                browser.execute_script(
+                    "document.querySelector('[aria-label=\"User list\"]').parentElement.style.display='none';")
             except JavaScriptException:
-                browser.execute_script("document.querySelector('[aria-label=\"Users list\"]').parentElement.style.display='none';")
+                browser.execute_script(
+                    "document.querySelector('[aria-label=\"Users list\"]').parentElement.style.display='none';")
         else:
             element = browser.find_elements(By.ID, 'chat-toggle-button')[0]
             if element.is_enabled():
@@ -216,27 +259,35 @@ def bbb_browser():
 
     if not args.chat:
         try:
-            element = browser.find_elements(By.CSS_SELECTOR, 'button[aria-label^="Users and messages toggle"]')[0]
+            element = browser.find_elements(
+                By.CSS_SELECTOR, 'button[aria-label^="Users and messages toggle"]')[0]
             if element.is_enabled():
                 element.click()
         except NoSuchElementException:
             logging.info("could not find users and messages toggle")
         except ElementClickInterceptedException:
             logging.info("could not find users and messages toggle")
- 
+
     # Remove everything from the top bar, except the meeting's title.
-    browser.execute_script("document.querySelector('[class^=\"navbar\"] > div[class^=\"top\"] > div[class^=\"left\"]').style.display='none';")
-    browser.execute_script("document.querySelectorAll('[class^=\"navbar\"] > div[class^=\"top\"] > div[class^=\"center\"] > :not(h1)').forEach((ele) => ele.style.display='none');")
-    browser.execute_script("document.querySelector('[class^=\"navbar\"] > div[class^=\"top\"] > div[class^=\"right\"]').style.display='none';")
+    browser.execute_script(
+        "document.querySelector('[class^=\"navbar\"] > div[class^=\"top\"] > div[class^=\"left\"]').style.display='none';")
+    browser.execute_script(
+        "document.querySelectorAll('[class^=\"navbar\"] > div[class^=\"top\"] > div[class^=\"center\"] > :not(h1)').forEach((ele) => ele.style.display='none');")
+    browser.execute_script(
+        "document.querySelector('[class^=\"navbar\"] > div[class^=\"top\"] > div[class^=\"right\"]').style.display='none';")
 
     if args.bbb_hide_meeting_title:
-        browser.execute_script("document.querySelector('[class^=\"navbar\"] > div[class^=\"top\"]').style.display='none';")
+        browser.execute_script(
+            "document.querySelector('[class^=\"navbar\"] > div[class^=\"top\"]').style.display='none';")
     if args.bbb_hide_who_talks:
-        browser.execute_script("document.querySelector('[class^=\"navbar\"] > div[class^=\"bottom\"]').style.display='none';")
+        browser.execute_script(
+            "document.querySelector('[class^=\"navbar\"] > div[class^=\"bottom\"]').style.display='none';")
     if args.bbb_hide_meeting_title and args.bbb_hide_who_talks:
-        browser.execute_script("document.querySelector('[class^=\"navbar\"]').style.height='0px';")
+        browser.execute_script(
+            "document.querySelector('[class^=\"navbar\"]').style.height='0px';")
 
-    browser.execute_script("document.querySelector('[aria-label=\"Actions bar\"]').style.display='none';")
+    browser.execute_script(
+        "document.querySelector('[aria-label=\"Actions bar\"]').style.display='none';")
 
     browser.execute_script("""
         const hideDecoratorsStyle = document.createElement("style");
@@ -258,7 +309,8 @@ def bbb_browser():
     """)
 
     if args.logo != '':
-        [logo_pos_vertical, logo_pos_horizontal] = args.logo_position.split('/')
+        [logo_pos_vertical,
+            logo_pos_horizontal] = args.logo_position.split('/')
         browser.execute_script("""
             const navbarHeader = document.querySelector('[class^="navbar"]');
 
@@ -271,12 +323,16 @@ def bbb_browser():
         """ % (logo_pos_vertical, logo_pos_horizontal, args.logo))
 
     try:
-        browser.execute_script("document.getElementById('container').setAttribute('style','margin-bottom:30px');")
+        browser.execute_script(
+            "document.getElementById('container').setAttribute('style','margin-bottom:30px');")
     except JavascriptException:
-        browser.execute_script("document.getElementById('app').setAttribute('style','margin-bottom:30px');")
+        browser.execute_script(
+            "document.getElementById('app').setAttribute('style','margin-bottom:30px');")
 
     if args.bbb_background_color:
-        browser.execute_script("document.querySelector('body').setAttribute('style','background-color: %s;');" % args.bbb_background_color)
+        browser.execute_script(
+            "document.querySelector('body').setAttribute('style','background-color: %s;');" % args.bbb_background_color)
+
 
 def create_meeting():
     create_params = {}
@@ -288,6 +344,7 @@ def create_meeting():
         create_params['name'] = args.meetingTitle
     return bbb.create_meeting(args.id, params=create_params)
 
+
 def get_join_url():
     minfo = bbb.get_meeting_info(args.id)
     pwd = minfo.get_meetinginfo().get_attendeepw()
@@ -295,21 +352,22 @@ def get_join_url():
     joinParams['meetingID'] = args.id
     joinParams['fullName'] = args.user
     joinParams['password'] = pwd
-    joinParams['userdata-bbb_auto_join_audio'] = "true" 
-    joinParams['userdata-bbb_enable_video'] = 'true' 
-    joinParams['userdata-bbb_listen_only_mode'] = "true" 
-    joinParams['userdata-bbb_force_listen_only'] = "true" 
-    joinParams['userdata-bbb_skip_check_audio'] = 'true' 
+    joinParams['userdata-bbb_auto_join_audio'] = "true"
+    joinParams['userdata-bbb_enable_video'] = 'true'
+    joinParams['userdata-bbb_listen_only_mode'] = "true"
+    joinParams['userdata-bbb_force_listen_only'] = "true"
+    joinParams['userdata-bbb_skip_check_audio'] = 'true'
     joinParams['joinViaHtml5'] = 'true'
-    return bbbUB.buildUrl("join", params=joinParams) 
+    return bbbUB.buildUrl("join", params=joinParams)
+
 
 def stream_intro():
     introBegin = ""
     if args.beginIntroAt:
-        introBegin = "-ss %s"%(args.beginIntroAt)
+        introBegin = "-ss %s" % (args.beginIntroAt)
     introEnd = ""
     if args.endIntroAt:
-        introEnd = "-to %s"%(args.endIntroAt)
+        introEnd = "-to %s" % (args.endIntroAt)
     ffmpeg_stream = 'ffmpeg -re %s %s -thread_queue_size "%s" -i %s -thread_queue_size %s -f pulse -i default -ac 2 %s -f flv "%s"' % (
         introBegin, introEnd, args.ffmpeg_input_thread_queue_size, args.intro, args.ffmpeg_input_thread_queue_size, args.ffmpeg_stream_options, args.target
     )
@@ -317,6 +375,7 @@ def stream_intro():
     ffmpeg_args = shlex.split(ffmpeg_stream)
     logging.info("streaming intro...")
     p = subprocess.call(ffmpeg_args)
+
 
 def stream():
     ffmpeg_outputs = []
@@ -352,9 +411,11 @@ def stream():
     logging.debug('Preparing to execute %r' % ffmpeg_cmd)
     p = subprocess.call(ffmpeg_cmd)
 
+
 if args.startMeeting is False:
     while bbb.is_meeting_running(args.id).is_meeting_running() != True:
-        logging.info("Meeting isn't running. We will try again in %d seconds!" % connect_timeout)
+        logging.info(
+            "Meeting isn't running. We will try again in %d seconds!" % connect_timeout)
         time.sleep(connect_timeout)
 
 # current date and time
@@ -362,10 +423,10 @@ now = datetime.now()
 fileTimeStamp = now.strftime("%Y%m%d%H%M%S")
 
 set_up()
-if args.stream and args.intro:
-    stream_intro()
+# if args.stream and args.intro:
+#     stream_intro()
 if args.stream or args.download:
-    bbb_browser()
+    # bbb_browser()
     stream()
 if browser:
     browser.quit()

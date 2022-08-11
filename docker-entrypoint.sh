@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . /usr/src/app/nsswrapper.sh
+# . ./nsswrapper.sh
 
 if pulseaudio --check ; then
 	echo "Pulseaudio already running - killing it..."
