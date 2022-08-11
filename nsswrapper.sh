@@ -1,5 +1,3 @@
-#!/bin/sh
-
 if test "`id -u`" -ne 0; then
     if test -s /tmp/pulse-passwd; then
 	echo Skipping nsswrapper setup - already initialized

@@ -79,19 +79,6 @@ this file must be reachable by the webform and has to have access to the redis d
 * the streamer does not reconnect, if the connection to BigBlueButton gets lost
 * when using breakoutrooms, the streamer will show the popup of the invitation and not be able to get back to the conference
 
-## privacy policy and legal notes
-
-Please try to follow best practices for data protection and privacy.
-Take all steps to comply with privacy law principles that prohibit unlawful, opaque and limitless capture and processing of personal data. 
-
-The GDPR (General Data Protection Regulation) provides individual rights to EU citizens in relation to personal Data.
-To find out more about GDPR, please visit the [European Union’s website](https://ec.europa.eu).
-
-The California Consumer Privacy Act (CCPA) provides certain rights to California residents in relation to their personal information. 
-
-Similar to the GDPR and  the CCPA, other local privacy law principles  also may institute penalties for businesses that suffer data breaches due to poor security procedures.
-Always be transparent and act upon privacy rights and federal law Regulations.
-
 ## License
 BigBlueButton-liveStreaming is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

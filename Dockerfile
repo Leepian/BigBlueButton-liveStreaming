@@ -29,8 +29,6 @@ COPY py_requirements.txt ./
 
 RUN pip install --no-cache-dir -r py_requirements.txt
 
-
-
 RUN apt-get update && \
     apt-get install -y gnupg wget curl unzip --no-install-recommends && \
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \

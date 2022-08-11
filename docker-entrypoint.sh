@@ -1,14 +1,10 @@
-#!/bin/bash
-
 . /usr/src/app/nsswrapper.sh
-# . ./nsswrapper.sh
 
 if pulseaudio --check ; then
 	echo "Pulseaudio already running - killing it..."
 	pulseaudio --kill
 fi
 
-# sometimes pulseaudio fails to start (for unknown reason - try starting it again)
 p=0
 
 while ! pulseaudio --check && [ $p -lt 2 ] ; do

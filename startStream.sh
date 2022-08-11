@@ -1,8 +1,4 @@
-#!/bin/sh
-
 . /usr/src/app/nsswrapper.sh
-# . ./nsswrapper.sh
-
 
 STREAM_MEETING="";
 if [ "${BBB_STREAM_URL}" != "" ]
@@ -95,5 +91,3 @@ then
 fi 
 
 xvfb-run -n 122 --server-args="-screen 0 ${RESOLUTION}x24" python3 stream.py -s ${BBB_URL} -p ${BBB_SECRET} -i "${BBB_MEETING_ID}" -u "${BBB_USER_NAME}" -r "${RESOLUTION}" ${SHOW_CHAT} $START_MEETING $ATTENDEE_PASSWORD $MODERATOR_PASSWORD $DEV_SHM_USAGE -T "$MEETING_TITLE" $STREAM_MEETING $CHAT_STREAM_URL $CHAT_STREAM_MESSAGE $INTRO $BEGIN_INTRO $END_INTRO $DOWNLOAD_MEETING;
-
-# xvfb-run -n 122 --server-args="-screen 0 426x240x24" python3 stream.py -s https://james.awshost.in/bigbluebutton/ -p mSl0nG5hNIbDmGvrKHigVLkWw7Rwyflmy1NPFBVv0 -i "random-77733999" -u "RTMP" -r "426x240" "-A IVLHwOBSVmYP" "-M JjeQYksarqLQ" -T "Live" "-l";
